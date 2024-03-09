@@ -1,0 +1,184 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+model Country {
+    id    String  @id @default(auto()) @map("_id") @db.ObjectId
+    name  String
+    abbrv String?
+    image String
+    users User[]
+}
+
+model Vote {
+    id           String   @id @default(auto()) @map("_id") @db.ObjectId
+    votedAt      DateTime @default(now())
+    deviceCookie String?
+    user         User     @relation(fields: [userId], references: [id])
+    userId       String   @db.ObjectId
+    qr           Qr?      @relation(fields: [qrId], references: [id])
+    qrId         String?  @unique @db.ObjectId
+}
+
+model Qr {
+    id            String  @id @default(auto()) @map("_id") @db.ObjectId
+    prompt        String?
+    image         String?
+    website_url   String
+    model_latency Int
+    visited       Boolean @default(false)
+    vote          Vote?
+}
+
+model User {
+    id     String  @id @default(auto()) @map("_id") @db.ObjectId
+    name   String?
+    // username String? @unique
+    role   String?
+    status String?
+    bio    String?
+    city   String?
+
+    country   Country @relation(fields: [countryId], references: [id])
+    countryId String  @db.ObjectId
+
+    email          String?   @unique
+    emailVerified  DateTime?
+    avatar         String?
+    image          String?
+    backgroudImage String?
+    password       String?
+    createdAt      DateTime  @default(now())
+    updatedAt      DateTime  @updatedAt
+
+    accounts Account[]
+    // events   Event[]
+    // orders   Order[]
+
+    // player Player?
+    votes Vote[]
+}
+
+model Account {
+    id                String  @id @default(auto()) @map("_id") @db.ObjectId
+    userId            String  @db.ObjectId
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String? @db.String
+    access_token      String? @db.String
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String? @db.String
+    session_state     String?
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+}
+
+// model Event {
+//     id            String   @id @default(auto()) @map("_id") @db.ObjectId
+//     title         String?
+//     description   String?
+//     location      String?
+//     image         String?
+//     startDateTime DateTime @default(now())
+//     endDateTime   DateTime @default(now())
+//     url           String?
+//     owner         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+//     category      Category @relation(fields: [categoryId], references: [name])
+//     userId        String   @db.ObjectId
+//     categoryId    String
+//     players       Player[]
+//     orders        Order[]
+// }
+
+// model Player {
+//     id      String  @id @default(auto()) @map("_id") @db.ObjectId
+//     userId  String? @db.ObjectId
+//     user    User?   @relation(fields: [userId], references: [id])
+//     Event   Event?  @relation(fields: [eventId], references: [id])
+//     eventId String? @db.ObjectId
+//     Team    Team?   @relation(fields: [teamId], references: [id])
+//     teamId  String? @db.ObjectId
+
+//     @@unique([userId])
+// }
+
+// model Team {
+//     id      String   @id @default(auto()) @map("_id") @db.ObjectId
+//     players Player[]
+//     name    String?
+//     image   String?
+//     Match   Match?   @relation(fields: [matchId], references: [id])
+//     matchId String?  @db.ObjectId
+// }
+
+// model Match {
+//     id    String @id @default(auto()) @map("_id") @db.ObjectId
+//     // mode String?
+//     teams Team[]
+// }
+
+// model Order {
+//     id        String   @id @default(auto()) @map("_id") @db.ObjectId
+//     createdAt DateTime @default(now())
+//     booker    User     @relation(fields: [bookerId], references: [id], onDelete: Cascade)
+//     bookerId  String   @db.ObjectId
+//     event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+//     eventId   String   @db.ObjectId
+// }
+
+// model Category {
+//     id     String  @id @default(auto()) @map("_id") @db.ObjectId
+//     name   String  @unique
+//     events Event[]
+// }
+
+// 65c1e1dce5d0fa5c66137fc4
+// 65c1e1dce5d0fa5c66137fc3
+// oauth
+// google
+// 113060643472662798536
+// null
+// ya29.a0AfB_byBpJ1nsSSqqobdnjn8BU0Wug1nS9xydHoC6J5ydGaD8Ag-neXV7UT0keK8QMLcpH_t1N6GAAMrQ9ot-lGIZ2u5I66E0W_ENPyW549phrncSUwMEeTkSqdk3Oko2p1xzVHBVV1ZES1J6FLeLOzi0xG2MPaq0vwbvaCgYKAbESARISFQHGX2MiB71qYS43ySJsl49Eya68yA0171
+// 1707208682
+// Bearer
+// https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid
+// eyJhbGciOiJSUzI1NiIsImtpZCI6ImJkYzRlMTA5ODE1ZjQ2OTQ2MGU2M2QzNGNkNjg0MjE1MTQ4ZDdiNTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI1MjA2NDM1NDk4NjQtOWxzNDUyMTlwNzZoczlzdG51OHB1Zmt2OWhzOGdhNWMuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI1MjA2NDM1NDk4NjQtOWxzNDUyMTlwNzZoczlzdG51OHB1Zmt2OWhzOGdhNWMuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMTMwNjA2NDM0NzI2NjI3OTg1MzYiLCJlbWFpbCI6ImJha2h0cnYuZGlhc0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IjMwcUVHYzQ2Vnh1eFQxQ2I4OFdIcFEiLCJuYW1lIjoiRGlhcyBCYWtodGl5YXJvdiIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NMNlVtVUV3cGFFb040TXdnWGYzbUhETzJvNWQ2dEJKa2dxYTlvdzZ1T2VtQT1zOTYtYyIsImdpdmVuX25hbWUiOiJEaWFzIiwiZmFtaWx5X25hbWUiOiJCYWtodGl5YXJvdiIsImxvY2FsZSI6ImVuIiwiaWF0IjoxNzA3MjA1MDgzLCJleHAiOjE3MDcyMDg2ODN9.dUkUG9ptDY8uJexZnlekmF8IchI3bbnUKbLWaGzOs3R1xyoqk-kHzCouHzH0SQTmA8zkjG9PIIIMc5BRDLxghEHhpUo3YkiL2kdC1v2U5AlSqPuLNlRxPKJfsR-3Id5KydP8cXiZPGsfsLaYLXYnome2O9curBCC8WLAAtsOABVQKzwPOoqkzlB9kWyh2CZb1jhciwe9v3bdqCM2Tw-ut3YjijGGwaNqajKsYy8iKe5WGwsi39iSqb2QrlXuhTkuyvY2FtZO0-mUwmOeHKR3Q6Ppv3Mmbs9kIZ9FIJ_bRAV3hgbhXgv7uEhvfeiZUd4aiDendMKjBvNRpEdqIW1-2Q
+// null
+
+// 65c1e1dce5d0fa5c66137fc3
+// Main
+// bakhtrv.dias@gmail.com
+// null
+// https://lh3.googleusercontent.com/a/ACg8ocL6UmUEwpaEoN4MwgXf3mHDO2o5d6tBJkgqa9ow6uOemA=s96-c
+// null
+// 2024-02-06T07:38:04.180Z
+// 2024-02-07T12:59:31.121Z
+
+// 65c2ff63c9d80543c223fcb8
+// 2024-02-07T03:56:19.720Z
+// 2024-02-07T06:21:48.524Z
+// null
+// null
+// []
+// [4] 
+
+// 65c30404c9d80543c223fcb9
+// test
+// null
+// 2024-02-07T04:16:03.689Z
+// [65c26d49c9d80543c223fcb6]
+// 65c2ff63c9d80543c223fcb8
+// 65c26d49c9d80543c223fcb6
